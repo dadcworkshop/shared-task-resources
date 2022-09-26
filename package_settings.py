@@ -17,7 +17,7 @@ _origin = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url'
 # NAME = os.path.split(urlparse(_origin).path)[1]
 # VERSION = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode()
 NAME = "dadc_tools"
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 
 PACKAGES = find_packages(exclude=['tests', '_notebooks', '_scripts'])
 _VERSION_FILEPATH = os.path.join(_THIS_FOLDER, PACKAGES[0], 'version.py')
