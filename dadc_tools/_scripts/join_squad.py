@@ -32,7 +32,7 @@ if __name__ == '__main__':
         train_weights = [1] * len(file_paths)
     assert len(train_weights) == len(file_paths)
 
-        # Extract source directory and filenames
+    # Extract source directory and filenames
     output_dir = os.path.dirname(file_paths[0])
     if args.output_dir:
         output_dir = os.path.expanduser(args.output_dir)

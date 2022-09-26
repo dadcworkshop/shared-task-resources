@@ -3,8 +3,8 @@ import re
 import json
 import numpy as np
 from typing import Dict, List, Union
-from utils import get_unique_order_preserving
-from settings import RANDOM_SEED
+from dadc_tools.utils import get_unique_order_preserving
+from dadc_tools.settings import RANDOM_SEED
 
 
 def load_squad(data_path: str, return_flat: bool=False) -> Union[List, Dict]:
