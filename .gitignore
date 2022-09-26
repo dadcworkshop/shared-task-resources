@@ -1,5 +1,6 @@
 # Custom
 .idea/
+dadc_tools/version.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

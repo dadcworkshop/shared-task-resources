@@ -7,7 +7,7 @@ from dadc_tools.utils import get_unique_order_preserving
 from dadc_tools.settings import RANDOM_SEED
 
 
-def load_squad(data_path: str, return_flat: bool=False) -> Union[List, Dict]:
+def load_squad(data_path: str, return_flat: bool = False) -> Union[List, Dict]:
     """Load a SQuAD format dataset"""
     with open(os.path.expanduser(data_path), "r") as f:
         squad_data = json.load(f)
@@ -26,21 +26,37 @@ def save_squad(squad_dict: Dict, data_path: str) -> None:
         json.dump(squad_dict, f)
 
 
-def flatten_squad(squad_dict: Dict, ref: str='', verbose:bool=False) -> List:
+def flatten_squad(squad_dict, ref: str = '', has_metadata: bool = False, verbose: bool = False) -> List:
     """Convert a loaded SQuAD file into a flat list of dictionaries - one for each QA pair"""
-    squad_flat = [
-        {
-            'id': qa['id'],
-            'title': dp['title'],
-            'ref': ref,
-            'context': para['context'],
-            'question': qa['question'],
-            'answers': qa['answers']
-        }
-        for dp in squad_dict
+    if has_metadata:
+        squad_flat = [
+            {
+                'id': qa['id'],
+                'title': dp['title'],
+                'ref': ref,
+                'context': para['context'],
+                'question': qa['question'],
+                'answers': qa['answers'],
+                'metadata': qa['metadata'] if 'metadata' in qa else {},
+            }
+            for dp in squad_dict
             for para in dp['paragraphs']
-                for qa in para['qas']
-    ]
+            for qa in para['qas']
+        ]
+    else:
+        squad_flat = [
+            {
+                'id': qa['id'],
+                'title': dp['title'],
+                'ref': ref,
+                'context': para['context'],
+                'question': qa['question'],
+                'answers': qa['answers']
+            }
+            for dp in squad_dict
+            for para in dp['paragraphs']
+            for qa in para['qas']
+        ]
 
     if verbose:
         print("Flattened to {} QA pairs".format(len(squad_flat)))
@@ -48,7 +64,7 @@ def flatten_squad(squad_dict: Dict, ref: str='', verbose:bool=False) -> List:
     return squad_flat
 
 
-def unflatten_squad(squad_flat: List, version: str='', has_metadata: bool=False, verbose: bool=False) -> Dict:
+def unflatten_squad(squad_flat: List, version: str = '', has_metadata: bool = False, verbose: bool = False) -> Dict:
     """Convert a flat list of SQuAD examples to the standard SQuAD format"""
     squad_dict = {
         'data': [],
@@ -60,7 +76,7 @@ def unflatten_squad(squad_flat: List, version: str='', has_metadata: bool=False,
 
     if verbose:
         print(f"Flat version has {len(squad_flat)} QAs")
-    
+
     dps_by_title = {}
     dps_by_title_and_context = {}
     for dp in squad_flat:
@@ -113,7 +129,7 @@ def unflatten_squad(squad_flat: List, version: str='', has_metadata: bool=False,
     return squad_dict
 
 
-def finalise_squad_data_list(squad_data_list: List, version: str='') -> Dict:
+def finalise_squad_data_list(squad_data_list: List, version: str = '') -> Dict:
     """Convert a SQuAD data list to SQuAD final format"""
     return {
         'data': squad_data_list,
@@ -121,7 +137,7 @@ def finalise_squad_data_list(squad_data_list: List, version: str='') -> Dict:
     }
 
 
-def shuffle_flat_squad(squad_flat: List, random_seed: int=RANDOM_SEED) -> List:
+def shuffle_flat_squad(squad_flat: List, random_seed: int = RANDOM_SEED) -> List:
     """Shuffle the order of a flat list of SQuAD examples"""
     np.random.seed(random_seed)  # set random seed
 
@@ -133,7 +149,8 @@ def shuffle_flat_squad(squad_flat: List, random_seed: int=RANDOM_SEED) -> List:
     return squad_flat
 
 
-def load_and_shuffle_squad(data_path: str, num_to_return: int=-1, return_flat: bool=False, verbose: bool=False) -> Union[List, Dict]:
+def load_and_shuffle_squad(data_path: str, num_to_return: int = -1, return_flat: bool = False,
+                           verbose: bool = False) -> Union[List, Dict]:
     """Load and shuffle a SQuAD dataset and return num requested"""
     flat_squad = flatten_squad(load_squad(data_path=data_path), verbose=verbose)
     shuffled_squad = shuffle_flat_squad(flat_squad)
@@ -144,31 +161,31 @@ def load_and_shuffle_squad(data_path: str, num_to_return: int=-1, return_flat: b
     return shuffled_squad
 
 
-def get_squad_len(data_path: str, verbose: bool=False) -> int:
+def get_squad_len(data_path: str, verbose: bool = False) -> int:
     """Get the number of QA pairs"""
     flat_squad = flatten_squad(load_squad(data_path=data_path), verbose=verbose)
     return len(flat_squad)
 
 
-def get_squad_titles(data_path: str, verbose: bool=False) -> List:
+def get_squad_titles(data_path: str, verbose: bool = False) -> List:
     """Get all unique passage titles"""
     flat_squad = flatten_squad(load_squad(data_path=data_path), verbose=verbose)
     return get_unique_order_preserving(flat_squad, apply_custom_fn=lambda x: x['title'])
 
 
-def get_squad_contexts(data_path: str, verbose: bool=False) -> List:
+def get_squad_contexts(data_path: str, verbose: bool = False) -> List:
     """Get all unique passages/contexts"""
     flat_squad = flatten_squad(load_squad(data_path=data_path), verbose=verbose)
     return get_unique_order_preserving(flat_squad, apply_custom_fn=lambda x: x['context'])
 
 
-def build_context_to_title_map(data_path: str, verbose: bool=False) -> Dict:
+def build_context_to_title_map(data_path: str, verbose: bool = False) -> Dict:
     """Create a dict of contexts to titles"""
     flat_squad = flatten_squad(load_squad(data_path=data_path), verbose=verbose)
     return {x['context'].strip(): x['title'] for x in flat_squad}
 
 
-def get_majority(answer_list: List)  -> List:
+def get_majority(answer_list: List) -> List:
     """Extract the majority vote answer or first answer in case of no majority for the dev data for consistency"""
     dict_answer_counts = {}
     for i, ans in enumerate(answer_list):
@@ -210,11 +227,11 @@ def remove_answers(squad_dict: Dict) -> Dict:
     return squad_dict
 
 
-def clean_context(text: str, replace_linebreaks: bool=True) -> str:
+def clean_context(text: str, replace_linebreaks: bool = True) -> str:
     """Cleans a SQuAD context"""
     if replace_linebreaks:
         text = re.sub('[\r\n]+', ' ', text)  # remove linebreaks
-    text = re.sub('\s+', ' ', text)  # fix multiple spaces
+    text = re.sub(r'\s+', ' ', text)  # fix multiple spaces
     return text.strip()
 
 
